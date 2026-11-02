@@ -238,8 +238,35 @@ button { cursor: pointer; }
 .catitem .lnk { min-height: 44px; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
 
+
+/* plan */
+.plan-top { display: flex; flex-direction: column; gap: 6px; }
+.plan-top .big { font: 700 22px/1.2 var(--f-display); letter-spacing: -0.01em; }
+.shifts { display: flex; flex-direction: column; gap: 8px; }
+.shift { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.shift .tm { font: 600 14px var(--f-num); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.shift .nm { min-width: 0; overflow-wrap: anywhere; }
+.shift.now { border-color: var(--accent); background: var(--warn-soft); }
+.shift.done { opacity: .55; }
+.shift .st { font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.shift.now .st { color: var(--accent); }
+.rest { padding: 12px 14px; border-radius: 10px; background: var(--in-soft); color: var(--in); font-weight: 600; }
+.week { display: flex; flex-direction: column; }
+.wrow { display: grid; grid-template-columns: 38px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); align-items: start; }
+.wrow:last-child { border-bottom: 0; }
+.wrow .wd { font-weight: 700; font-family: var(--f-display); }
+.wrow .wb { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 14px; }
+.wrow .wb small { color: var(--muted); font-size: 12.5px; }
+.wrow.today { background: var(--warn-soft); margin-inline: -8px; padding-inline: 8px; border-radius: 8px; border-bottom-color: transparent; }
+.wrow.today .wd { color: var(--accent); }
+.tips { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.rule { width: 100%; border-collapse: collapse; font-size: 14px; }
+.rule td { padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.rule tr:last-child td { border-bottom: 0; }
+.rule td:first-child { font: 600 13px var(--f-num); white-space: nowrap; width: 38%; }
+
 /* tab bar */
-.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(4, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface); border-top: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); padding-bottom: env(safe-area-inset-bottom, 0px); }
 .tabbar button { border: 0; background: transparent; padding: 8px 4px 6px; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; color: var(--muted); }
 .tabbar button[aria-current="page"] { color: var(--accent); font-weight: 600; }
 .tabbar svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -410,6 +437,39 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
   </div>
 
   <!-- TAB: CÀI ĐẶT -->
+  <!-- TAB: KẾ HOẠCH -->
+  <div class="tab" id="tab-plan" hidden>
+    <section class="panel">
+      <div class="plan-top">
+        <div class="sub">Kế hoạch chạy part-time · thử 2 tuần từ 02/11 đến 16/11</div>
+        <div class="big" id="planPhase"></div>
+        <div class="sub" id="planCount"></div>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Hôm nay</h2>
+      <div class="shifts" id="planToday"></div>
+    </section>
+    <section class="panel">
+      <h2>Lịch cả tuần (khoảng 28 giờ)</h2>
+      <div class="week" id="planWeek"></div>
+      <p class="sub">Sáng 9:00–10:30 và chiều 13:30–17:00 dành cho tìm việc, nghỉ và ăn. Tuần 2: thử thêm 1–2 buổi chiều 14:00–16:30 để xem có đơn không.</p>
+    </section>
+    <section class="panel">
+      <h2>Quy tắc nhận đơn</h2>
+      <ul class="tips" id="planRules"></ul>
+    </section>
+    <section class="panel">
+      <h2>Cuối mỗi ca, ghi vào Sổ</h2>
+      <ul class="tips" id="planLog"></ul>
+    </section>
+    <section class="panel">
+      <h2>Chốt lịch ngày 16/11</h2>
+      <p class="sub">Thu nhập ròng mỗi giờ của ca = (phí ship + thưởng − xăng) ÷ số giờ chạy. Mốc dưới là tạm, bạn tự chỉnh theo mục tiêu.</p>
+      <table class="rule" id="planRule"></table>
+    </section>
+  </div>
+
   <div class="tab" id="tab-set" hidden>
     <section class="panel">
       <h2>Mục tiêu lãi ròng</h2>
@@ -493,6 +553,10 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
   <button type="button" data-tab="car">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h5l3 8M10 9L8 6H5M13 13h-3"/></svg>
     Xe
+  </button>
+  <button type="button" data-tab="plan">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3"/></svg>
+    Kế hoạch
   </button>
   <button type="button" data-tab="set">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
@@ -798,7 +862,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     $$("#tabbar button").forEach(function (b) {
       if (b.dataset.tab === tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
     });
-    ["book", "stats", "car", "set"].forEach(function (t) { $("#tab-" + t).hidden = t !== tab; });
+    ["book", "stats", "car", "plan", "set"].forEach(function (t) { $("#tab-" + t).hidden = t !== tab; });
     $("#periodBar").hidden = !(tab === "book" || tab === "stats");
   }
   function renderPeriod() {
@@ -1408,6 +1472,99 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     toast("Đã xoá toàn bộ dữ liệu");
   }
 
+  /* ---------- kế hoạch chạy ---------- */
+  var PLAN_START = "2026-11-02";
+  var PLAN_REVIEW = "2026-11-16";
+  var SHIFT_TRUA = { name: "Ca trưa", from: "10:30", to: "13:30" };
+  var SHIFT_TOI = { name: "Ca tối", from: "17:30", to: "21:00" };
+  var SHIFT_KHUYA = { name: "Ca khuya (thử)", from: "21:00", to: "22:30" };
+  // chỉ số theo getDay(): 0 = Chủ nhật
+  var PLAN_WEEK = {
+    1: { shifts: [SHIFT_TOI], note: "" },
+    2: { shifts: [SHIFT_TRUA, SHIFT_TOI], note: "" },
+    3: { shifts: [], note: "Nghỉ chạy. Dành cho phỏng vấn và nộp hồ sơ." },
+    4: { shifts: [SHIFT_TRUA], note: "" },
+    5: { shifts: [SHIFT_TOI], note: "" },
+    6: { shifts: [SHIFT_TRUA, SHIFT_TOI, SHIFT_KHUYA], note: "Ngày đông đơn nhất. Ca khuya chỉ chạy ở khu quen đường." },
+    0: { shifts: [SHIFT_TOI], note: "" }
+  };
+  var PLAN_ORDER = [1, 2, 3, 4, 5, 6, 0];
+  var PLAN_RULES = [
+    "Ưu tiên đơn gần quán, giao gần và có thể ghép với đơn kế tiếp.",
+    "Tránh đơn xa mà phí thấp, nhất là khi đang ở xa khu đông quán.",
+    "Đơn ứng tiền: chỉ nhận dưới hạn mức bạn đặt (gợi ý 150–200k). Ghi sổ sau khi khách trả xong.",
+    "Không chạy liên tục quá 4–5 tiếng, nghỉ 15–20 phút giữa các ca.",
+    "Ca khuya chỉ chạy ở khu quen đường. Thấy mệt thì dừng ngay."
+  ];
+  var PLAN_LOG = [
+    "Phí ship và thưởng: ghi là khoản Thu.",
+    "Xăng: ghi là khoản Chi, tách riêng khỏi tiền ứng cho quán.",
+    "Tiền ứng cho quán và tiền khách hoàn lại: ghi bằng danh mục riêng (thêm trong Cài đặt) để không lẫn vào thu nhập.",
+    "Mục Xe: ghi km mỗi ngày để tính tiền xăng mỗi km.",
+    "Ghi giờ bắt đầu và kết thúc ca vào ô ghi chú của khoản Thu đầu tiên, ví dụ \"Ca tối 17:30–21:00, Thủ Đức\"."
+  ];
+  var PLAN_RULETABLE = [
+    ["Từ ~60k/giờ", "Giữ cố định, có thể thêm giờ"],
+    ["~40–60k/giờ", "Giữ nếu còn thời gian rảnh"],
+    ["Dưới ~40k/giờ", "Bỏ ca đó, dùng thời gian tìm việc"]
+  ];
+  function minutesOf(hhmm) { var p = hhmm.split(":"); return Number(p[0]) * 60 + Number(p[1]); }
+  function daysBetween(a, b) { return Math.round((pd(b) - pd(a)) / 86400000); }
+  function renderPlan() {
+    var t = today();
+    var phase, count;
+    var sinceStart = daysBetween(PLAN_START, t);
+    var toReview = daysBetween(t, PLAN_REVIEW);
+    if (sinceStart < 0) { phase = "Chưa đến ngày bắt đầu"; count = "Bắt đầu " + dmy(PLAN_START) + ", còn " + (-sinceStart) + " ngày."; }
+    else if (toReview > 0) {
+      var wk = sinceStart < 7 ? 1 : 2;
+      phase = "Tuần " + wk + " / 2";
+      count = "Còn " + toReview + " ngày đến mốc chốt lịch " + dmy(PLAN_REVIEW) + ".";
+    } else if (toReview === 0) { phase = "Hôm nay chốt lịch"; count = "Tính thu nhập ròng mỗi giờ của từng ca rồi quyết định giữ hay bỏ."; }
+    else { phase = "Đã qua mốc chốt lịch"; count = "Mốc chốt là " + dmy(PLAN_REVIEW) + ". Cập nhật lịch cố định nếu bạn chưa làm."; }
+    $("#planPhase").textContent = phase;
+    $("#planCount").textContent = count;
+
+    var now = new Date();
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+    var day = PLAN_WEEK[now.getDay()];
+    var box = $("#planToday");
+    box.textContent = "";
+    if (!day.shifts.length) {
+      box.append(h("div", { class: "rest" }, day.note || "Hôm nay nghỉ chạy."));
+    } else {
+      day.shifts.forEach(function (sh) {
+        var a = minutesOf(sh.from), b = minutesOf(sh.to);
+        var state = nowMin >= b ? "done" : (nowMin >= a ? "now" : "");
+        var label = state === "done" ? "Đã qua" : state === "now" ? "Đang chạy" : "Sắp tới";
+        box.append(h("div", { class: "shift " + state },
+          h("span", { class: "tm" }, sh.from + "–" + sh.to),
+          h("span", { class: "nm" }, sh.name),
+          h("span", { class: "st" }, label)));
+      });
+      if (day.note) box.append(h("p", { class: "sub" }, day.note));
+    }
+
+    var wk = $("#planWeek");
+    wk.textContent = "";
+    PLAN_ORDER.forEach(function (d) {
+      var p = PLAN_WEEK[d];
+      var lines = p.shifts.length
+        ? p.shifts.map(function (sh) { return h("span", null, sh.name + " " + sh.from + "–" + sh.to); })
+        : [h("span", null, "Nghỉ chạy")];
+      wk.append(h("div", { class: "wrow" + (d === now.getDay() ? " today" : "") },
+        h("span", { class: "wd" }, WD_SHORT[d]),
+        h("div", { class: "wb" }, lines, p.note ? h("small", null, p.note) : null)));
+    });
+
+    var rl = $("#planRules"); rl.textContent = "";
+    PLAN_RULES.forEach(function (x) { rl.append(h("li", null, x)); });
+    var lg = $("#planLog"); lg.textContent = "";
+    PLAN_LOG.forEach(function (x) { lg.append(h("li", null, x)); });
+    var rt = $("#planRule"); rt.textContent = "";
+    PLAN_RULETABLE.forEach(function (r) { rt.append(h("tr", null, h("td", null, r[0]), h("td", null, r[1]))); });
+  }
+
   /* ---------- tabs and render all ---------- */
   function setTab(t) {
     tab = t;
@@ -1421,6 +1578,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     if (tab === "book") { renderForm(); renderBook(); }
     else if (tab === "stats") renderStats();
     else if (tab === "car") renderCar();
+    else if (tab === "plan") renderPlan();
     else renderSettings();
   }
 

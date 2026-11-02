@@ -1,5 +1,5 @@
 /* Service worker: mở app khi không có mạng. Đổi số VERSION khi cập nhật index.html để máy tải bản mới. */
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "so-thu-chi-" + VERSION;
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
