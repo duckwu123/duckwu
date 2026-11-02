@@ -7,7 +7,7 @@ Web app ghi thu nhập và chi phí hằng ngày cho shipper ShopeeFood. Cài l�
 - **Sổ**: nhập khoản thu và chi, gõ nhanh `35`, `35k`, `35.000,50`. Sửa hoặc xoá khoản đã nhập. Xem lãi ròng theo ngày, tuần, tháng.
 - **Thống kê**: biểu đồ lãi ròng từng ngày, mục tiêu, chi và thu theo từng khoản.
 - **Xe**: ghi km mỗi ngày, số km trên đồng hồ, tiền xăng mỗi km, nhắc thay nhớt và bảo dưỡng.
-- **Kế hoạch**: lịch chạy hôm nay và cả tuần, quy tắc nhận đơn, mốc chốt lịch 16/11/2026.
+- **Kế hoạch**: lịch chạy hôm nay và cả tuần, quy tắc nhận đơn, mốc chốt lịch 16/11/2026. Ở đầu mục có **Chấm đơn trước khi nhận**: nhập phí, tổng km, tổng phút (gõ được phép cộng như `2+4`), app tính thu nhập mỗi giờ của đơn đó và báo Nhận, Cân nhắc hoặc Bỏ theo mốc bạn đặt.
 - **Cài đặt**: thêm, đổi tên, xoá danh mục. Đặt mục tiêu. Chọn giao diện sáng hoặc tối. Sao lưu, khôi phục, xuất CSV cho Excel.
 
 ## Đưa lên GitHub Pages (làm được ngay trên điện thoại)

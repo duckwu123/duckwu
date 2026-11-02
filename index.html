@@ -239,6 +239,17 @@ button { cursor: pointer; }
 hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
 
 
+
+/* order check */
+.verdict { padding: 14px 16px; border-radius: 12px; font: 700 24px/1.2 var(--f-display); display: flex; flex-direction: column; gap: 4px; }
+.verdict small { font: 500 13.5px/1.4 var(--f-body); }
+.verdict.go { background: var(--in-soft); color: var(--in); }
+.verdict.maybe { background: var(--warn-soft); color: var(--warn); }
+.verdict.no { background: var(--out-soft); color: var(--out); }
+.verdict.idle { background: var(--bg); color: var(--muted); font-size: 16px; font-weight: 600; border: 1px dashed var(--line); }
+details.mots summary { cursor: pointer; font-weight: 600; font-size: 14px; min-height: 40px; display: flex; align-items: center; }
+details.mots .fields { margin-top: 8px; }
+
 /* plan */
 .plan-top { display: flex; flex-direction: column; gap: 6px; }
 .plan-top .big { font: 700 22px/1.2 var(--f-display); letter-spacing: -0.01em; }
@@ -439,6 +450,45 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
   <!-- TAB: CÀI ĐẶT -->
   <!-- TAB: KẾ HOẠCH -->
   <div class="tab" id="tab-plan" hidden>
+    <section class="panel" id="orderPanel">
+      <h2>Chấm đơn trước khi nhận</h2>
+      <p class="sub">Nhập phí, tổng km và tổng phút của đơn. Có thể gõ phép cộng như 2+4 hoặc 8+6+12. Số lẻ gõ bằng dấu phẩy, ví dụ 2,5.</p>
+      <div class="fields">
+        <div class="field">
+          <label for="ordFee">Phí ship + thưởng (đ)</label>
+          <input id="ordFee" type="text" inputmode="decimal" placeholder="vd. 25 hoặc 25k" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ordKm">Tổng km (đến quán + giao)</label>
+          <input id="ordKm" type="text" placeholder="vd. 2+4" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ordMin">Tổng phút (đi + chờ + giao)</label>
+          <input id="ordMin" type="text" placeholder="vd. 8+6+12" autocomplete="off">
+        </div>
+      </div>
+      <div class="verdict idle" id="ordVerdict" aria-live="polite">Nhập đủ 3 số để chấm đơn</div>
+      <div class="stats" id="ordStats"></div>
+      <div class="hint" id="ordHint"></div>
+      <details class="mots">
+        <summary>Chỉnh mốc nhận và bỏ</summary>
+        <div class="fields">
+          <div class="field">
+            <label for="ordAcc">Nhận nếu từ (đ/giờ)</label>
+            <input id="ordAcc" type="text" inputmode="decimal" placeholder="50000">
+          </div>
+          <div class="field">
+            <label for="ordSkip">Bỏ nếu dưới (đ/giờ)</label>
+            <input id="ordSkip" type="text" inputmode="decimal" placeholder="35000">
+          </div>
+          <div class="field">
+            <label for="ordPerKm">Chi phí mỗi km (đ)</label>
+            <input id="ordPerKm" type="text" inputmode="decimal" placeholder="Để trống để tự tính">
+          </div>
+        </div>
+        <p class="sub">Để trống chi phí mỗi km thì app lấy xăng mỗi km của tháng này ở mục Xe. Nếu chưa có số liệu hợp lý thì dùng 1.000đ/km.</p>
+      </details>
+    </section>
     <section class="panel">
       <div class="plan-top">
         <div class="sub">Kế hoạch chạy part-time · thử 2 tuần từ 02/11 đến 16/11</div>
@@ -678,7 +728,7 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
         { id: "m3", name: "Bảo dưỡng tổng quát", every: 6000, last: null }
       ]
     },
-    prefs: { theme: "auto", lastBackup: 0 }
+    prefs: { theme: "auto", lastBackup: 0, acc: 50000, skip: 35000, perKm: 0 }
   };
 
   function clean(raw) {
@@ -736,7 +786,12 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
       });
     }
     var p = o.prefs || {};
-    out.prefs = { theme: ["light", "dark"].indexOf(p.theme) >= 0 ? p.theme : "auto", lastBackup: Number(p.lastBackup) || 0 };
+    out.prefs = {
+      theme: ["light", "dark"].indexOf(p.theme) >= 0 ? p.theme : "auto", lastBackup: Number(p.lastBackup) || 0,
+      acc: Number(p.acc) > 0 ? Math.min(1000000, Math.round(Number(p.acc))) : 50000,
+      skip: Number(p.skip) > 0 ? Math.min(1000000, Math.round(Number(p.skip))) : 35000,
+      perKm: Number(p.perKm) > 0 ? Math.min(20000, Math.round(Number(p.perKm))) : 0
+    };
     return out;
   }
 
@@ -1472,6 +1527,72 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     toast("Đã xoá toàn bộ dữ liệu");
   }
 
+  /* ---------- chấm đơn ---------- */
+  function parseDec(raw) {
+    var parts = String(raw || "").replace(/\s/g, "").split("+");
+    var total = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var v = Number(parts[i].replace(",", "."));
+      if (!parts[i] || !isFinite(v) || v < 0) return 0;
+      total += v;
+    }
+    return round2(total);
+  }
+  function parseCost(raw) {
+    var s = String(raw || "").toLowerCase().replace(/\s/g, "");
+    if (!s) return 0;
+    var v;
+    if (/k$/.test(s)) v = parseFloat(s.slice(0, -1).replace(",", ".")) * 1000;
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) v = Number(s.replace(/\./g, ""));
+    else v = parseFloat(s.replace(",", "."));
+    return isFinite(v) && v > 0 ? Math.round(v) : 0;
+  }
+  function perKmCost() {
+    if (S.prefs.perKm > 0) return { v: S.prefs.perKm, src: "đã đặt" };
+    var t = new Date();
+    var mr = [ds(new Date(t.getFullYear(), t.getMonth(), 1)), ds(new Date(t.getFullYear(), t.getMonth() + 1, 0))];
+    var kms = kmIn(mr);
+    var fuel = S.entries.reduce(function (a, e) { return a + (e.t === "out" && e.cat === S.car.fuelCat && e.d >= mr[0] && e.d <= mr[1] ? e.amt : 0); }, 0);
+    if (kms >= 20 && fuel > 0) {
+      var v = Math.round(fuel / kms);
+      if (v >= 200 && v <= 3000) return { v: v, src: "từ mục Xe" };
+    }
+    return { v: 1000, src: "mặc định" };
+  }
+  function renderOrder() {
+    var fee = parseAmt($("#ordFee").value), kmv = parseDec($("#ordKm").value), mn = parseDec($("#ordMin").value);
+    var vd = $("#ordVerdict"), st = $("#ordStats"), hint = $("#ordHint");
+    st.textContent = "";
+    var pk = perKmCost();
+    hint.textContent = "Chi phí xăng và hao mòn tính " + money(pk.v) + "đ/km (" + pk.src + "). Mốc: nhận từ " + money(S.prefs.acc) + "đ/giờ, bỏ dưới " + money(S.prefs.skip) + "đ/giờ.";
+    if (!(fee > 0 && kmv > 0 && mn > 0)) {
+      vd.className = "verdict idle";
+      vd.textContent = "Nhập đủ 3 số để chấm đơn";
+      return;
+    }
+    var cost = round2(kmv * pk.v);
+    var left = round2(fee - cost);
+    var perHour = Math.round(left / mn * 60);
+    var cls, word;
+    if (left <= 0 || perHour < S.prefs.skip) { cls = "no"; word = "BỎ"; }
+    else if (perHour >= S.prefs.acc) { cls = "go"; word = "NHẬN"; }
+    else { cls = "maybe"; word = "CÂN NHẮC"; }
+    var need = Math.ceil((S.prefs.acc * mn / 60 + cost) / 1000) * 1000;
+    vd.className = "verdict " + cls;
+    vd.textContent = "";
+    vd.append(
+      word + " · " + signed(perHour, true) + "/giờ",
+      h("small", null, cls === "go" ? "Đạt mốc nhận của bạn."
+        : "Muốn đạt mốc nhận, đơn này cần phí khoảng " + money(need) + "đ trở lên.")
+    );
+    st.append(
+      h("div", { class: "stat" }, h("span", null, "Phí ship"), h("b", null, money(fee) + "đ")),
+      h("div", { class: "stat out" }, h("span", null, "Chi phí đi lại"), h("b", null, money(cost) + "đ")),
+      h("div", { class: "stat " + (left > 0 ? "in" : "out") }, h("span", null, "Còn lại"), h("b", null, signed(left, true))),
+      h("div", { class: "stat" }, h("span", null, "Mỗi km"), h("b", null, signed(Math.round(left / kmv), true)))
+    );
+  }
+
   /* ---------- kế hoạch chạy ---------- */
   var PLAN_START = "2026-11-02";
   var PLAN_REVIEW = "2026-11-16";
@@ -1563,6 +1684,11 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
     PLAN_LOG.forEach(function (x) { lg.append(h("li", null, x)); });
     var rt = $("#planRule"); rt.textContent = "";
     PLAN_RULETABLE.forEach(function (r) { rt.append(h("tr", null, h("td", null, r[0]), h("td", null, r[1]))); });
+    var ia = $("#ordAcc"), is = $("#ordSkip"), ik = $("#ordPerKm");
+    if (document.activeElement !== ia) ia.value = toField(S.prefs.acc);
+    if (document.activeElement !== is) is.value = toField(S.prefs.skip);
+    if (document.activeElement !== ik) ik.value = S.prefs.perKm ? toField(S.prefs.perKm) : "";
+    renderOrder();
   }
 
   /* ---------- tabs and render all ---------- */
@@ -1598,6 +1724,26 @@ hr { border: 0; border-top: 1px solid var(--line); margin: 0; width: 100%; }
   $("#form").addEventListener("submit", onSubmit);
   $("#cancelEdit").addEventListener("click", cancelEdit);
   $("#amt").addEventListener("input", function () { updateHint(); });
+
+  // chấm đơn
+  ["#ordFee", "#ordKm", "#ordMin"].forEach(function (id) { $(id).addEventListener("input", renderOrder); });
+  $("#ordAcc").addEventListener("change", function (e) {
+    var v = parseAmt(e.target.value);
+    S.prefs.acc = v > 0 ? Math.min(1000000, v) : 50000;
+    if (S.prefs.skip > S.prefs.acc) S.prefs.skip = S.prefs.acc;
+    save(); renderPlan(); toast("Đã đặt mốc nhận " + money(S.prefs.acc) + "đ/giờ");
+  });
+  $("#ordSkip").addEventListener("change", function (e) {
+    var v = parseAmt(e.target.value);
+    S.prefs.skip = v > 0 ? Math.min(S.prefs.acc, v) : Math.min(S.prefs.acc, 35000);
+    save(); renderPlan(); toast("Đã đặt mốc bỏ " + money(S.prefs.skip) + "đ/giờ");
+  });
+  $("#ordPerKm").addEventListener("change", function (e) {
+    var raw = e.target.value.trim();
+    var v = raw ? parseCost(raw) : 0;
+    S.prefs.perKm = v > 0 ? Math.min(20000, v) : 0;
+    save(); renderPlan(); toast(S.prefs.perKm ? "Đã đặt chi phí " + money(S.prefs.perKm) + "đ/km" : "Chi phí mỗi km sẽ tự tính");
+  });
 
   // xe
   $("#odoBtn").addEventListener("click", function () {
